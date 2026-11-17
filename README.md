@@ -24,6 +24,14 @@ docker run --rm -p 8000:8000 figure-skating-api
 
 打开 <http://localhost:8000> 检查网页，完成一次问答，确认 API 可以保存并显示成绩。按 `Ctrl+C` 停止容器。当前容器内仍使用临时 SQLite：容器删除后成绩会丢失。这一步只验证容器运行；正式云部署前要改为云托管数据库。
 
+## 在本机连接 PostgreSQL
+
+1. 把 `.env.example` 复制为 `.env`，并把其中的示例密码换成你自己的密码。`.env` 已被 Git 忽略，不会上传到仓库。
+2. 启动 Docker Desktop，在本文件夹运行 `docker compose up --build -d`。
+3. 打开 <http://localhost:18000>，完成一次问答并查看成绩。运行 `docker compose down` 后重新启动，成绩应该仍在。
+
+Compose 会同时运行 API 和 PostgreSQL。数据库数据保存在 Docker 卷中，所以普通的 `docker compose down` 不会删除成绩。需要完全清空测试数据时才运行 `docker compose down -v`。这里的 PostgreSQL 仍在你的电脑上，**不是**老师要求的云托管资源。
+
 ## 当前结构
 
 - `web/`：静态网页（HTML、CSS、JavaScript）。
@@ -31,6 +39,6 @@ docker run --rm -p 8000:8000 figure-skating-api
 
 ## 下一阶段
 
-页面现在展示四张 Wikimedia Commons 运动员照片。每张照片下方都有作者、许可和原始文件页链接；图片目前由 Wikimedia 远程加载，需要联网。你拍的照片可以在上传后放进 `web/assets/`。之后将前端部署为静态网站、Python API 放入容器，并把 SQLite 换成云端托管 PostgreSQL，以满足课堂作业的三部分部署要求。当前 SQLite 仅供本地开发，不能当作最终要求的云端托管资源。
+页面现在展示四张 Wikimedia Commons 运动员照片。每张照片下方都有作者、许可和原始文件页链接；图片目前由 Wikimedia 远程加载，需要联网。你拍的照片可以在上传后放进 `web/assets/`。之后还要将前端部署为云端静态网站、API 部署为云端容器，并连接云托管 PostgreSQL，以满足课堂作业的三部分部署要求。
 
 答题记录不需要注册登录：浏览器生成随机编号，API 按编号查询历史。清除浏览器本地数据后，原记录不会再显示；这不是账户系统，也不适合存私人信息。

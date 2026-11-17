@@ -1,0 +1,27 @@
+services:
+  api:
+    build: .
+    ports:
+      - "18000:8000"
+    environment:
+      DATABASE_URL: postgresql://skating:${POSTGRES_PASSWORD}@db:5432/skating
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: skating
+      POSTGRES_DB: skating
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skating -d skating"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

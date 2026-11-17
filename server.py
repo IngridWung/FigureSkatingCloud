@@ -10,6 +10,7 @@ import sqlite3
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = ROOT / "data" / "skating.db"
+DATABASE_URL = os.environ.get("DATABASE_URL")
 QUESTIONS = [
     {"id": 1, "question": "Which discipline features two skaters, lifts, and throw jumps?", "choices": ["Men's singles", "Women's singles", "Pair skating", "Ice dance"], "answer": 2},
     {"id": 2, "question": "Which discipline especially emphasizes dance steps, rhythm, and partnership?", "choices": ["Ice dance", "Men's singles", "Women's singles", "Pair skating"], "answer": 0},
@@ -19,6 +20,20 @@ QUESTIONS = [
 
 
 def connect_db():
+    if DATABASE_URL:
+        import psycopg
+        from psycopg.rows import dict_row
+
+        db = psycopg.connect(DATABASE_URL, row_factory=dict_row)
+        db.execute("""CREATE TABLE IF NOT EXISTS attempts (
+            id BIGSERIAL PRIMARY KEY,
+            visitor_id TEXT NOT NULL,
+            score INTEGER NOT NULL,
+            total INTEGER NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )""")
+        return db
+
     DB_PATH.parent.mkdir(exist_ok=True)
     db = sqlite3.connect(DB_PATH)
     db.row_factory = sqlite3.Row
@@ -69,8 +84,10 @@ class Handler(SimpleHTTPRequestHandler):
             if not re.fullmatch(r"[0-9a-f]{32}", visitor_id):
                 return self.send_json(400, {"error": "Invalid visitor ID"})
             with connect_db() as db:
+                date_column = "to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS')" if DATABASE_URL else "created_at"
+                placeholder = "%s" if DATABASE_URL else "?"
                 rows = db.execute(
-                    "SELECT score, total, created_at FROM attempts WHERE visitor_id = ? ORDER BY id DESC LIMIT 10",
+                    f"SELECT score, total, {date_column} AS created_at FROM attempts WHERE visitor_id = {placeholder} ORDER BY id DESC LIMIT 10",
                     (visitor_id,),
                 ).fetchall()
             self.send_json(200, [dict(row) for row in rows])
@@ -99,8 +116,9 @@ class Handler(SimpleHTTPRequestHandler):
 
         score = sum(answer == q["answer"] for answer, q in zip(answers, QUESTIONS))
         with connect_db() as db:
+            placeholder = "%s" if DATABASE_URL else "?"
             db.execute(
-                "INSERT INTO attempts (visitor_id, score, total) VALUES (?, ?, ?)",
+                f"INSERT INTO attempts (visitor_id, score, total) VALUES ({placeholder}, {placeholder}, {placeholder})",
                 (visitor_id, score, len(QUESTIONS)),
             )
         self.send_json(201, {"score": score, "total": len(QUESTIONS)})
