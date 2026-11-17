@@ -32,6 +32,16 @@ docker run --rm -p 8000:8000 figure-skating-api
 
 Compose 会同时运行 API 和 PostgreSQL。数据库数据保存在 Docker 卷中，所以普通的 `docker compose down` 不会删除成绩。需要完全清空测试数据时才运行 `docker compose down -v`。这里的 PostgreSQL 仍在你的电脑上，**不是**老师要求的云托管资源。
 
+## 云端连接准备
+
+网页和 API 部署到不同网址后，需要互相知道地址：
+
+- 在 Azure Container App 的环境变量中设置 `CORS_ORIGIN` 为静态网站的完整网址，例如 `https://example.z22.web.core.windows.net`。这允许该网页在浏览器里调用 API。
+- 在 `web/config.js` 中设置 `window.FIGURE_SKATING_API_BASE` 为 Container App 的公开网址，例如 `https://example.azurecontainerapps.io`。部署前再填真实地址，不要填数据库密码。
+- API 的 `DATABASE_URL` 要在 Container App 的 Secret 中配置为云托管 PostgreSQL 连接字符串；不要写进 Git。`GET /api/health` 可用于检查 API 是否在运行。
+
+这些是部署时要填的地址与秘密；当前项目仍只在本机运行。
+
 ## 当前结构
 
 - `web/`：静态网页（HTML、CSS、JavaScript）。

@@ -11,6 +11,7 @@ import sqlite3
 ROOT = Path(__file__).resolve().parent
 DB_PATH = ROOT / "data" / "skating.db"
 DATABASE_URL = os.environ.get("DATABASE_URL")
+CORS_ORIGIN = os.environ.get("CORS_ORIGIN", "").rstrip("/")
 QUESTIONS = [
     {"id": 1, "question": "Which discipline features two skaters, lifts, and throw jumps?", "choices": ["Men's singles", "Women's singles", "Pair skating", "Ice dance"], "answer": 2},
     {"id": 2, "question": "Which discipline especially emphasizes dance steps, rhythm, and partnership?", "choices": ["Ice dance", "Men's singles", "Women's singles", "Pair skating"], "answer": 0},
@@ -47,6 +48,10 @@ def connect_db():
     return db
 
 
+def allowed_origin(origin):
+    return bool(re.fullmatch(r"http://(?:localhost|127\.0\.0\.1):\d+", origin)) or bool(CORS_ORIGIN and origin == CORS_ORIGIN)
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT / "web"), **kwargs)
@@ -56,7 +61,7 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         origin = self.headers.get("Origin", "")
-        if re.fullmatch(r"http://(?:localhost|127\.0\.0\.1):\d+", origin):
+        if allowed_origin(origin):
             self.send_header("Access-Control-Allow-Origin", origin)
             self.send_header("Vary", "Origin")
         self.send_header("Content-Length", str(len(body)))
@@ -65,7 +70,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_OPTIONS(self):
         origin = self.headers.get("Origin", "")
-        if self.path != "/api/attempts" or not re.fullmatch(r"http://(?:localhost|127\.0\.0\.1):\d+", origin):
+        if self.path != "/api/attempts" or not allowed_origin(origin):
             return self.send_json(403, {"error": "Origin not allowed"})
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", origin)
@@ -75,7 +80,9 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path == "/api/questions":
+        if self.path == "/api/health":
+            self.send_json(200, {"status": "ok"})
+        elif self.path == "/api/questions":
             self.send_json(200, [{k: v for k, v in q.items() if k != "answer"} for q in QUESTIONS])
         elif self.path.startswith("/api/attempts?"):
             from urllib.parse import parse_qs, urlsplit

@@ -1,6 +1,7 @@
 const visitorKey = "figure-skating-visitor";
 const localHost = ["localhost", "127.0.0.1"].includes(location.hostname);
-const apiBase = localHost && location.port !== "8000" ? "http://localhost:8000" : "";
+const localApiBase = localHost && location.pathname.startsWith("/web/") ? "http://localhost:8000" : "";
+const apiBase = (window.FIGURE_SKATING_API_BASE || localApiBase).replace(/\/$/, "");
 let visitorId = localStorage.getItem(visitorKey);
 if (!visitorId) {
   visitorId = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("");
