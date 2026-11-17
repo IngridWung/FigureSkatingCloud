@@ -1,6 +1,6 @@
 # 冰上四重奏 · 花样滑冰课程项目
 
-一个介绍男单、女单、双人滑和冰舞的网站。访客可观看节目视频、回答四道趣味题；Python 后端评分，并把最近成绩存到本地 SQLite 数据库。
+一个介绍男单、女单、双人滑和冰舞的网站。访客可观看节目视频、回答四道趣味题；Python 后端评分，并把最近成绩存到数据库。本机直接运行时使用 SQLite；Docker Compose 使用本机 PostgreSQL；云端将使用 Azure Database for PostgreSQL。
 
 ## 在 VS Code 中运行
 
@@ -38,9 +38,9 @@ Compose 会同时运行 API 和 PostgreSQL。数据库数据保存在 Docker 卷
 
 - 在 Azure Container App 的环境变量中设置 `CORS_ORIGIN` 为静态网站的完整网址，例如 `https://example.z22.web.core.windows.net`。这允许该网页在浏览器里调用 API。
 - 在 `web/config.js` 中设置 `window.FIGURE_SKATING_API_BASE` 为 Container App 的公开网址，例如 `https://example.azurecontainerapps.io`。部署前再填真实地址，不要填数据库密码。
-- API 的 `DATABASE_URL` 要在 Container App 的 Secret 中配置为云托管 PostgreSQL 连接字符串；不要写进 Git。`GET /api/health` 可用于检查 API 是否在运行。
+- 云端 API 使用 PostgreSQL 时，设置 `PGHOST` 为服务器终结点、`PGPORT=5432`、`PGDATABASE=postgres`、`PGUSER` 为管理员登录名、`PGSSLMODE=require`。将 `PGPASSWORD` 保存为 Container App 的 Secret，并让同名环境变量引用它；不要写进 Git。已有的 `DATABASE_URL` 配置方式仍可用于本地 Docker Compose。`GET /api/health` 可用于检查 API 是否在运行。
 
-这些是部署时要填的地址与秘密；当前项目仍只在本机运行。
+这些是部署时要填的地址与秘密。目前静态网页已部署到 Azure Blob Storage，PostgreSQL 灵活服务器也已创建；API 仍只在本机运行。
 
 ## 当前结构
 
@@ -49,6 +49,6 @@ Compose 会同时运行 API 和 PostgreSQL。数据库数据保存在 Docker 卷
 
 ## 下一阶段
 
-页面现在展示四张 Wikimedia Commons 运动员照片。每张照片下方都有作者、许可和原始文件页链接；图片目前由 Wikimedia 远程加载，需要联网。你拍的照片可以在上传后放进 `web/assets/`。之后还要将前端部署为云端静态网站、API 部署为云端容器，并连接云托管 PostgreSQL，以满足课堂作业的三部分部署要求。
+页面现在展示四张 Wikimedia Commons 运动员照片。每张照片下方都有作者、许可和原始文件页链接；图片目前由 Wikimedia 远程加载，需要联网。你拍的照片可以在上传后放进 `web/assets/`。之后还要将 API 部署为云端容器，并连接已创建的云托管 PostgreSQL，才能满足课堂作业的三部分部署要求。
 
 答题记录不需要注册登录：浏览器生成随机编号，API 按编号查询历史。清除浏览器本地数据后，原记录不会再显示；这不是账户系统，也不适合存私人信息。

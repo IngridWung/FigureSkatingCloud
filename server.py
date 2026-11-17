@@ -11,6 +11,7 @@ import sqlite3
 ROOT = Path(__file__).resolve().parent
 DB_PATH = ROOT / "data" / "skating.db"
 DATABASE_URL = os.environ.get("DATABASE_URL")
+USE_POSTGRES = bool(DATABASE_URL or os.environ.get("PGHOST"))
 CORS_ORIGIN = os.environ.get("CORS_ORIGIN", "").rstrip("/")
 QUESTIONS = [
     {"id": 1, "question": "Which discipline features two skaters, lifts, and throw jumps?", "choices": ["Men's singles", "Women's singles", "Pair skating", "Ice dance"], "answer": 2},
@@ -21,11 +22,11 @@ QUESTIONS = [
 
 
 def connect_db():
-    if DATABASE_URL:
+    if USE_POSTGRES:
         import psycopg
         from psycopg.rows import dict_row
 
-        db = psycopg.connect(DATABASE_URL, row_factory=dict_row)
+        db = psycopg.connect(DATABASE_URL or "", row_factory=dict_row)
         db.execute("""CREATE TABLE IF NOT EXISTS attempts (
             id BIGSERIAL PRIMARY KEY,
             visitor_id TEXT NOT NULL,
@@ -91,8 +92,8 @@ class Handler(SimpleHTTPRequestHandler):
             if not re.fullmatch(r"[0-9a-f]{32}", visitor_id):
                 return self.send_json(400, {"error": "Invalid visitor ID"})
             with connect_db() as db:
-                date_column = "to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS')" if DATABASE_URL else "created_at"
-                placeholder = "%s" if DATABASE_URL else "?"
+                date_column = "to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS')" if USE_POSTGRES else "created_at"
+                placeholder = "%s" if USE_POSTGRES else "?"
                 rows = db.execute(
                     f"SELECT score, total, {date_column} AS created_at FROM attempts WHERE visitor_id = {placeholder} ORDER BY id DESC LIMIT 10",
                     (visitor_id,),
@@ -123,7 +124,7 @@ class Handler(SimpleHTTPRequestHandler):
 
         score = sum(answer == q["answer"] for answer, q in zip(answers, QUESTIONS))
         with connect_db() as db:
-            placeholder = "%s" if DATABASE_URL else "?"
+            placeholder = "%s" if USE_POSTGRES else "?"
             db.execute(
                 f"INSERT INTO attempts (visitor_id, score, total) VALUES ({placeholder}, {placeholder}, {placeholder})",
                 (visitor_id, score, len(QUESTIONS)),
