@@ -13,6 +13,17 @@
 
 不需要安装 Python 扩展包或单独安装数据库。Python 自带 SQLite，首次答题时自动建立 `data/skating.db`。请勿把此文件上传到 Git。
 
+## 使用 Docker 在本机运行
+
+先启动 Docker Desktop，然后在 `figure skating` 文件夹的终端运行：
+
+```powershell
+docker build -t figure-skating-api .
+docker run --rm -p 8000:8000 figure-skating-api
+```
+
+打开 <http://localhost:8000> 检查网页，完成一次问答，确认 API 可以保存并显示成绩。按 `Ctrl+C` 停止容器。当前容器内仍使用临时 SQLite：容器删除后成绩会丢失。这一步只验证容器运行；正式云部署前要改为云托管数据库。
+
 ## 当前结构
 
 - `web/`：静态网页（HTML、CSS、JavaScript）。
