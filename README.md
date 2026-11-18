@@ -40,15 +40,17 @@ Compose 会同时运行 API 和 PostgreSQL。数据库数据保存在 Docker 卷
 - 在 `web/config.js` 中设置 `window.FIGURE_SKATING_API_BASE` 为 Container App 的公开网址，例如 `https://example.azurecontainerapps.io`。部署前再填真实地址，不要填数据库密码。
 - 云端 API 使用 PostgreSQL 时，设置 `PGHOST` 为服务器终结点、`PGPORT=5432`、`PGDATABASE=postgres`、`PGUSER` 为管理员登录名、`PGSSLMODE=require`。将 `PGPASSWORD` 保存为 Container App 的 Secret，并让同名环境变量引用它；不要写进 Git。已有的 `DATABASE_URL` 配置方式仍可用于本地 Docker Compose。`GET /api/health` 可用于检查 API 是否在运行。
 
-这些是部署时要填的地址与秘密。目前静态网页已部署到 Azure Blob Storage，PostgreSQL 灵活服务器也已创建；API 仍只在本机运行。
+云端部署已完成：静态网页位于 Azure Blob Storage `$web`，Python API 以容器运行在 Azure Container Apps，答题记录保存在 Azure Database for PostgreSQL Flexible Server。公开网页：<https://figureskatingingrid.z43.web.core.windows.net/>。API 公开地址已写入 `web/config.js`；数据库密码只保存在 Container App 的 Secret 中。已从公开网页完成答题提交，并看到最近成绩。
 
 ## 当前结构
 
 - `web/`：静态网页（HTML、CSS、JavaScript）。
-- `server.py`：网页服务器、问答接口和 SQLite 数据读写。
+- `server.py`：网页服务器、问答接口和成绩读写；本机默认 SQLite，云端使用 PostgreSQL。
 
-## 下一阶段
+## 提交前检查
 
-页面现在展示四张 Wikimedia Commons 运动员照片。每张照片下方都有作者、许可和原始文件页链接；图片目前由 Wikimedia 远程加载，需要联网。你拍的照片可以在上传后放进 `web/assets/`。之后还要将 API 部署为云端容器，并连接已创建的云托管 PostgreSQL，才能满足课堂作业的三部分部署要求。
+页面展示四张 Wikimedia Commons 运动员照片，每张照片下方都有作者、许可和原始文件页链接；图片目前由 Wikimedia 远程加载，需要联网。
+
+提交前在公开网页完成一次答题，刷新页面并确认最近成绩仍然显示；在 Azure 门户核对存储帐户、Container App 与 PostgreSQL 服务器。录制 2–3 分钟视频，展示完整流程、三个资源、遇到的问题及解决办法，以及生产环境改进。提交 Git 仓库链接、云资源截图和视频链接。
 
 答题记录不需要注册登录：浏览器生成随机编号，API 按编号查询历史。清除浏览器本地数据后，原记录不会再显示；这不是账户系统，也不适合存私人信息。
