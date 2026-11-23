@@ -2,6 +2,10 @@
 
 一个介绍男单、女单、双人滑和冰舞的网站。访客可观看节目视频、回答四道趣味题；Python 后端评分，并把最近成绩存到数据库。本机直接运行时使用 SQLite；Docker Compose 使用本机 PostgreSQL；云端将使用 Azure Database for PostgreSQL。
 
+## 网站预览
+
+![花样滑冰网站完整页面截图](docs/screenshots/01-public-website.png)
+
 ## 在 VS Code 中运行
 
 1. 用 VS Code 打开 `figure skating` 文件夹。
